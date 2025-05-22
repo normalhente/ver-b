@@ -73,8 +73,9 @@ const poorStory = Poor_Story({
 });
 
 export const metadata: Metadata = {
-  title: 'Ver-B-ID',
-  description: 'Ver-B-ID',
+  title: 'Ver B ID',
+  description: 'Ver B ID - Interactive Canvas Editor',
+  viewport: 'width=device-width, initial-scale=1.0',
 };
 
 export default function RootLayout({
