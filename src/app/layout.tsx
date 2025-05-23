@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Noto_Serif_KR, Noto_Sans_KR, Nanum_Gothic, Nanum_Myeongjo, Nanum_Pen_Script, Gaegu, Black_Han_Sans, Do_Hyeon, Jua, Poor_Story } from 'next/font/google';
 import './globals.css';
+import Script from 'next/script';
 
 const notoSerifKR = Noto_Serif_KR({
   weight: ['200', '300', '400', '500', '600', '700', '900'],
@@ -73,8 +74,8 @@ const poorStory = Poor_Story({
 });
 
 export const metadata: Metadata = {
-  title: 'Ver B ID',
-  description: 'Ver B ID - Interactive Canvas Editor',
+  title: 'Ver B',
+  description: 'Ver B - Interactive Canvas Application',
   viewport: 'width=device-width, initial-scale=1.0',
 };
 
@@ -98,6 +99,10 @@ export default function RootLayout({
     `}>
       <head>
         <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet" />
+        <Script
+          src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"
+          strategy="beforeInteractive"
+        />
       </head>
       <body>{children}</body>
     </html>
