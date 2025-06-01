@@ -1,207 +1,101 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-type Item = {
-  id: number;
-  type: 'text' | 'emoji' | 'image';
-  content: string;
-  x: number;
-  y: number;
-  size?: number;
-  color?: string;
-  fontFamily?: string;
-  angle?: number;
-  opacity?: number;
-  bgColor?: string;
-  bgOpacity?: number;
-};
+declare global {
+  interface Window {
+    p5: any;
+  }
+}
 
 export default function CanvasArea() {
-  const [items, setItems] = useState<Item[]>([]);
-  const draggingId = useRef<number | null>(null);
-  const startMouse = useRef({ x: 0, y: 0 });
-  const startBoxPos = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onPointerMove = (e: PointerEvent) => {
-      if (draggingId.current == null) return;
-      const newX = e.clientX - startMouse.current.x + startBoxPos.current.x;
-      const newY = e.clientY - startMouse.current.y + startBoxPos.current.y;
-      setItems(prev =>
-        prev.map(i =>
-          i.id === draggingId.current
-            ? { ...i, x: newX, y: newY }
-            : i
-        )
-      );
-    };
-    const onPointerUp = () => {
-      draggingId.current = null;
+    if (typeof window === 'undefined' || !containerRef.current) return;
+
+    const sketch = (p: any) => {
+      let particles: any[] = [];
+      const numParticles = 100;
+
+      p.setup = () => {
+        const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+        canvas.parent(containerRef.current);
+        p.background(0);
+        
+        // 파티클 초기화
+        for (let i = 0; i < numParticles; i++) {
+          particles.push({
+            x: p.random(p.width),
+            y: p.random(p.height),
+            vx: p.random(-2, 2),
+            vy: p.random(-2, 2),
+            size: p.random(2, 6),
+            color: p.color(p.random(255), p.random(255), p.random(255))
+          });
+        }
+      };
+
+      p.draw = () => {
+        p.background(0, 20);
+        
+        // 파티클 업데이트 및 그리기
+        particles.forEach(particle => {
+          // 위치 업데이트
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          
+          // 경계 체크
+          if (particle.x < 0 || particle.x > p.width) particle.vx *= -1;
+          if (particle.y < 0 || particle.y > p.height) particle.vy *= -1;
+          
+          // 파티클 그리기
+          p.noStroke();
+          p.fill(particle.color);
+          p.circle(particle.x, particle.y, particle.size);
+          
+          // 파티클 간 선 연결
+          particles.forEach(other => {
+            const d = p.dist(particle.x, particle.y, other.x, other.y);
+            if (d < 100) {
+              p.stroke(particle.color);
+              p.strokeWeight(0.5);
+              p.line(particle.x, particle.y, other.x, other.y);
+            }
+          });
+        });
+      };
+
+      p.windowResized = () => {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
+      };
+
+      p.mouseMoved = () => {
+        // 마우스 근처의 파티클에 영향
+        particles.forEach(particle => {
+          const d = p.dist(p.mouseX, p.mouseY, particle.x, particle.y);
+          if (d < 100) {
+            const angle = p.atan2(p.mouseY - particle.y, p.mouseX - particle.x);
+            particle.vx += p.cos(angle) * 0.2;
+            particle.vy += p.sin(angle) * 0.2;
+          }
+        });
+      };
     };
 
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
+    // p5 인스턴스 생성
+    const p5Instance = new window.p5(sketch);
+
+    // 클린업
     return () => {
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
+      p5Instance.remove();
     };
   }, []);
 
-  const onPointerDownItem = (id: number, e: React.PointerEvent) => {
-    e.stopPropagation();
-    draggingId.current = id;
-    startMouse.current = { x: e.clientX, y: e.clientY };
-    const itm = items.find(i => i.id === id)!;
-    startBoxPos.current = { x: itm.x, y: itm.y };
-  };
-
-  const addItem = (type: Item['type'], content: string) => {
-    const newItem: Item = {
-      id: Date.now(),
-      type,
-      content,
-      x: 100,
-      y: 100,
-      size: type === 'image' ? 200 : 24,
-      color: '#000000',
-      fontFamily: 'system-ui',
-      angle: 0,
-      opacity: 1,
-      bgColor: '#ffffff',
-      bgOpacity: 0
-    };
-    setItems(prev => [...prev, newItem]);
-  };
-
-  const removeItem = (id: number) => {
-    setItems(prev => prev.filter(i => i.id !== id));
-  };
-
-  const updateText = (id: number, content: string) => {
-    setItems(prev => prev.map(i =>
-      i.id === id ? { ...i, content } : i
-    ));
-  };
-
-  const adjustImageSize = (id: number, size: number) => {
-    setItems(prev => prev.map(i =>
-      i.id === id ? { ...i, size } : i
-    ));
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <div className="toolbar" style={{
-        padding: '12px 24px',
-        background: '#f5f5f5',
-        borderBottom: '1px solid #ddd',
-        display: 'flex',
-        gap: '16px',
-        alignItems: 'center'
-      }}>
-        <button onClick={() => addItem('text', '텍스트')}>텍스트</button>
-        <button onClick={() => addItem('emoji', '😊')}>이모지</button>
-        <button onClick={() => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = 'image/*';
-          input.onchange = (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (file) {
-              const reader = new FileReader();
-              reader.onload = (e) => {
-                addItem('image', e.target?.result as string);
-              };
-              reader.readAsDataURL(file);
-            }
-          };
-          input.click();
-        }}>이미지</button>
-      </div>
-
-      <div className="canvas" style={{
-        flex: 1,
-        position: 'relative',
-        background: '#ffffff',
-        overflow: 'hidden'
-      }}>
-        {items.map(item => (
-          <div
-            key={item.id}
-            onPointerDown={e => onPointerDownItem(item.id, e)}
-            style={{
-              position: 'absolute',
-              left: item.x,
-              top: item.y,
-              transform: `rotate(${item.angle}deg)`,
-              opacity: item.opacity,
-              backgroundColor: item.bgColor,
-              padding: '4px',
-              borderRadius: '4px',
-              touchAction: 'none',
-              cursor: 'move',
-              userSelect: 'none'
-            }}
-          >
-            {item.type === 'text' && (
-              <textarea
-                value={item.content}
-                onChange={e => updateText(item.id, e.target.value)}
-                style={{
-                  fontSize: item.size,
-                  fontFamily: item.fontFamily,
-                  color: item.color,
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  resize: 'none',
-                  width: 'auto',
-                  minWidth: '100px'
-                }}
-              />
-            )}
-            {item.type === 'emoji' && (
-              <div style={{
-                fontSize: item.size,
-                color: item.color
-              }}>
-                {item.content}
-              </div>
-            )}
-            {item.type === 'image' && (
-              <img
-                src={item.content}
-                width={item.size}
-                height={item.size}
-                style={{ objectFit: 'contain' }}
-                draggable={false}
-              />
-            )}
-            <button
-              onClick={() => removeItem(item.id)}
-              style={{
-                position: 'absolute',
-                top: -8,
-                right: -8,
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: '#ff4444',
-                color: 'white',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12
-              }}
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
+    <div 
+      ref={containerRef} 
+      className="w-full h-screen bg-black"
+    />
   );
 }
