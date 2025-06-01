@@ -74,9 +74,8 @@ const poorStory = Poor_Story({
 });
 
 export const metadata: Metadata = {
-  title: 'Ver B',
-  description: 'Ver B - Interactive Canvas Application',
-  viewport: 'width=device-width, initial-scale=1.0',
+  title: 'Interactive Canvas',
+  description: 'Interactive canvas with p5.js',
 };
 
 export default function RootLayout({
@@ -85,26 +84,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" className={`
-      ${notoSerifKR.variable}
-      ${notoSansKR.variable}
-      ${nanumGothic.variable}
-      ${nanumMyeongjo.variable}
-      ${nanumPen.variable}
-      ${gaegu.variable}
-      ${blackHanSans.variable}
-      ${doHyeon.variable}
-      ${jua.variable}
-      ${poorStory.variable}
-    `}>
+    <html lang="en">
       <head>
-        <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet" />
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"
-          strategy="beforeInteractive"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
       </head>
-      <body>{children}</body>
+      <body className={`
+        ${notoSerifKR.variable}
+        ${notoSansKR.variable}
+        ${nanumGothic.variable}
+        ${nanumMyeongjo.variable}
+        ${nanumPen.variable}
+        ${gaegu.variable}
+        ${blackHanSans.variable}
+        ${doHyeon.variable}
+        ${jua.variable}
+        ${poorStory.variable}
+      `}>
+        {children}
+      </body>
     </html>
   );
 }
